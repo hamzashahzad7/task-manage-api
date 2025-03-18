@@ -8,17 +8,21 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 // Enable CORS for all origins
-app.use(cors({
-  origin: '*',  // Allow requests from all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Allow specific HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'],  // Allow specific headers
-}));
+app.use(
+  cors({
+    origin: "*", // Allow requests from all origins
+    methods: ["GET", "POST", "PUT", "DELETE"], // Allow specific HTTP methods
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow specific headers
+  })
+);
 const prisma = require("./config/prisma-config");
-
 
 // Middleware to parse JSON bodies
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.send("<h1>Hello</h1>");
+});
 // Create admin if no admin user exists
 const createAdminIfNotExists = async () => {
   const existingAdmin = await prisma.user.findFirst({
@@ -141,7 +145,7 @@ const authenticate = (handler) => async (req, res) => {
 
 // API: Create Task (Standard User)
 app.post(
-  '/api/task',
+  "/api/task",
   authenticate(async (req, res) => {
     const { title, description, dueDate, priority, status, project } = req.body;
 
@@ -161,23 +165,27 @@ app.post(
 
       res.status(201).json(task);
     } catch (err) {
-      res.status(500).json({ error: 'Error creating task' });
+      res.status(500).json({ error: "Error creating task" });
     }
   })
 );
 
 // API: Update Task (Standard User)
 app.put(
-  '/api/task/:taskId',
+  "/api/task/:taskId",
   authenticate(async (req, res) => {
     const { taskId } = req.params;
     const { title, description, dueDate, priority, status, project } = req.body;
 
     try {
       // Only allow users to update their own tasks
-      const task = await prisma.task.findUnique({ where: { id: Number(taskId) } });
-      if (task.userId !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'You can only update your own tasks' });
+      const task = await prisma.task.findUnique({
+        where: { id: Number(taskId) },
+      });
+      if (task.userId !== req.user.id && req.user.role !== "admin") {
+        return res
+          .status(403)
+          .json({ error: "You can only update your own tasks" });
       }
 
       const updatedTask = await prisma.task.update({
@@ -194,40 +202,44 @@ app.put(
 
       res.status(200).json(updatedTask);
     } catch (err) {
-      res.status(500).json({ error: 'Error updating task' });
+      res.status(500).json({ error: "Error updating task" });
     }
   })
 );
 
 // API: Delete Task (Standard User)
 app.delete(
-  '/api/task/:taskId',
+  "/api/task/:taskId",
   authenticate(async (req, res) => {
     const { taskId } = req.params;
 
     try {
       // Only allow users to delete their own tasks
-      const task = await prisma.task.findUnique({ where: { id: Number(taskId) } });
-      if (task.userId !== req.user.id && req.user.role !== 'admin') {
-        return res.status(403).json({ error: 'You can only delete your own tasks' });
+      const task = await prisma.task.findUnique({
+        where: { id: Number(taskId) },
+      });
+      if (task.userId !== req.user.id && req.user.role !== "admin") {
+        return res
+          .status(403)
+          .json({ error: "You can only delete your own tasks" });
       }
 
       await prisma.task.delete({
         where: { id: Number(taskId) },
       });
 
-      res.status(200).json({ message: 'Task deleted successfully' });
+      res.status(200).json({ message: "Task deleted successfully" });
     } catch (err) {
-      res.status(500).json({ error: 'Error deleting task' });
+      res.status(500).json({ error: "Error deleting task" });
     }
   })
 );
 
 // API: Get All Tasks (Admin only)
 app.get(
-  '/api/tasks',
+  "/api/tasks",
   authenticate(async (req, res) => {
-    if (req.user.role === 'admin') {
+    if (req.user.role === "admin") {
       // Admin can view all tasks
       const tasks = await prisma.task.findMany();
       return res.status(200).json(tasks);
@@ -240,7 +252,6 @@ app.get(
     }
   })
 );
-
 
 // API: Get Tasks for Standard User
 app.get(
@@ -281,14 +292,15 @@ app.get(
   })
 );
 
-
 // admin side only
 // API: Get All Users (Admin only)
 app.get(
-  '/api/admin/users',
+  "/api/admin/users",
   authenticate(async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'You do not have permission to view users' });
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "You do not have permission to view users" });
     }
 
     try {
@@ -302,17 +314,19 @@ app.get(
       });
       res.status(200).json(users);
     } catch (err) {
-      res.status(500).json({ error: 'Error fetching users' });
+      res.status(500).json({ error: "Error fetching users" });
     }
   })
 );
 
 // API: Create User (Admin only)
 app.post(
-  '/api/admin/user',
+  "/api/admin/user",
   authenticate(async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'You do not have permission to create a user' });
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "You do not have permission to create a user" });
     }
 
     const { username, password, role } = req.body;
@@ -327,17 +341,19 @@ app.post(
       });
       res.status(201).json(newUser);
     } catch (err) {
-      res.status(500).json({ error: 'Error creating user' });
+      res.status(500).json({ error: "Error creating user" });
     }
   })
 );
 
 // API: Update User (Admin only)
 app.put(
-  '/api/admin/user/:userId',
+  "/api/admin/user/:userId",
   authenticate(async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'You do not have permission to update users' });
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "You do not have permission to update users" });
     }
 
     const { userId } = req.params;
@@ -350,17 +366,19 @@ app.put(
       });
       res.status(200).json(updatedUser);
     } catch (err) {
-      res.status(500).json({ error: 'Error updating user' });
+      res.status(500).json({ error: "Error updating user" });
     }
   })
 );
 
 // API: Delete User (Admin only)
 app.delete(
-  '/api/admin/user/:userId',
+  "/api/admin/user/:userId",
   authenticate(async (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'You do not have permission to delete users' });
+    if (req.user.role !== "admin") {
+      return res
+        .status(403)
+        .json({ error: "You do not have permission to delete users" });
     }
 
     const { userId } = req.params;
@@ -369,13 +387,12 @@ app.delete(
       await prisma.user.delete({
         where: { id: Number(userId) },
       });
-      res.status(200).json({ message: 'User deleted successfully' });
+      res.status(200).json({ message: "User deleted successfully" });
     } catch (err) {
-      res.status(500).json({ error: 'Error deleting user' });
+      res.status(500).json({ error: "Error deleting user" });
     }
   })
 );
-
 
 // Starting the server
 const PORT = process.env.PORT || 5000;
